@@ -25,6 +25,7 @@ fn multi_counter(count: usize) -> usize {
         handles.push(handle);
     }
     for handle in handles {
+        // join() means sit & wait
         let local_count = handle.join().unwrap();
         current_count += local_count;
     }
@@ -61,7 +62,7 @@ mod tests {
 
     #[test]
     fn it_works() {
-        let count = 1000;
+        let count = 1_000_000_000;
         let start = Instant::now();
         let _out = counter(count);
         println!("time-single: {}ms", start.elapsed().as_millis());
