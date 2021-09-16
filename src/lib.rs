@@ -1,5 +1,5 @@
 // cargo init --lib
-// to generate the file 
+// to generate the file
 
 // cargo fmt -- to format
 
