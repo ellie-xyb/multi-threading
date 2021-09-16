@@ -16,7 +16,7 @@ fn multi_counter(count: usize) -> usize {
     let num_threads = 8;
     let mut handles = Vec::new();
     for _ in 0..num_threads {
-        let count_per_thread = count / num_threads; 
+        let count_per_thread = count / num_threads;
         let handle = std::thread::spawn(move || {
             let mut local_count = 0;
             for _ in 0..count_per_thread {
@@ -35,7 +35,6 @@ fn multi_counter(count: usize) -> usize {
     current_count
 }
 
-
 // mutex short for Mutual exclusion, a data structure don't allow others touch the same thing at the same time
 fn multi_counter_mutex(count: usize) -> usize {
     // Arc reference atomic reference count, is a special type can copy the pointer itself and count the pointer
@@ -43,7 +42,7 @@ fn multi_counter_mutex(count: usize) -> usize {
     let num_threads = 8;
     let mut handles = Vec::new();
     for _ in 0..num_threads {
-        let count_per_thread = count / num_threads; 
+        let count_per_thread = count / num_threads;
         let current_count = current_count.clone();
         let handle = std::thread::spawn(move || {
             let mut local_count: usize = 0;
@@ -71,15 +70,18 @@ fn rayon_counter(count: usize) -> usize {
     let num_threads = 8;
     let count_per_thread = count / num_threads;
 
-    let local_counts: Vec<_> = (0..num_threads).into_par_iter().map(|_| {
-        let mut local_count: usize = 0;
+    let local_counts: Vec<_> = (0..num_threads)
+        .into_par_iter()
+        .map(|_| {
+            let mut local_count: usize = 0;
 
-        for _ in 0..count_per_thread  {
-            local_count += 1;
-        }
+            for _ in 0..count_per_thread {
+                local_count += 1;
+            }
 
-        local_count
-    }).collect();
+            local_count
+        })
+        .collect();
 
     for l in local_counts {
         total_count += l;
@@ -104,21 +106,20 @@ mod tests {
         let start = Instant::now();
         for _ in 0..1000 {
             let _out = multi_counter(count);
-        } 
+        }
         println!("time-multi: {}ms", start.elapsed().as_millis());
 
         let start = Instant::now();
         for _ in 0..1000 {
             let out = rayon_counter(count);
-        } 
+        }
         println!("time-rayon: {}ms", start.elapsed().as_millis());
 
         let start = Instant::now();
         for _ in 0..1000 {
             let _out = multi_counter_mutex(count);
-        } 
+        }
         println!("time-multi-mutex: {}ms", start.elapsed().as_millis());
-
 
         // assert_eq!(out, count)
     }
