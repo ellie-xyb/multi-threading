@@ -1,8 +1,16 @@
+// cargo init --lib
+// to generate the file 
+
+// cargo fmt -- to format
+
+// can run your fn in a fastest mode
+// cargo test --release -- --nocapture
+
 use std::sync::{Arc, Mutex};
 
 use rayon::prelude::*;
 
-fn counter(count: usize) -> usize {
+pub fn counter(count: usize) -> usize {
     let mut current_count = 0;
 
     for _ in 0..count {
@@ -11,12 +19,13 @@ fn counter(count: usize) -> usize {
     current_count
 }
 
-fn multi_counter(count: usize) -> usize {
+pub fn multi_counter(count: usize) -> usize {
     let mut current_count = 0;
     let num_threads = 8;
     let mut handles = Vec::new();
     for _ in 0..num_threads {
         let count_per_thread = count / num_threads;
+        // thread spawn can get me an extra thread
         let handle = std::thread::spawn(move || {
             let mut local_count = 0;
             for _ in 0..count_per_thread {
@@ -35,9 +44,36 @@ fn multi_counter(count: usize) -> usize {
     current_count
 }
 
+pub fn rayon_counter(count: usize) -> usize {
+    let mut total_count = 0;
+    let num_threads = 8;
+    let count_per_thread = count / num_threads;
+
+    let local_counts: Vec<_> = (0..num_threads)
+        // rayon generate thread for all the cpu core to be ready
+        .into_par_iter()
+        .map(|_| {
+            let mut local_count: usize = 0;
+
+            for _ in 0..count_per_thread {
+                local_count += 1;
+            }
+
+            local_count
+        })
+        .collect();
+
+    for l in local_counts {
+        total_count += l;
+    }
+
+    total_count
+}
+
 // mutex short for Mutual exclusion, a data structure don't allow others touch the same thing at the same time
-fn multi_counter_mutex(count: usize) -> usize {
+pub fn multi_counter_mutex(count: usize) -> usize {
     // Arc reference atomic reference count, is a special type can copy the pointer itself and count the pointer
+    // Arc is more likely like a pointer, mutex is the value that pointer point at
     let current_count: Arc<Mutex<usize>> = Arc::new(Mutex::new(0));
     let num_threads = 8;
     let mut handles = Vec::new();
@@ -60,34 +96,9 @@ fn multi_counter_mutex(count: usize) -> usize {
     }
 
     // into_inner() will take the value and break the mutex
-
+    // I have to lock it if I want to use the value
     let guard = current_count.lock().unwrap();
     *guard
-}
-
-fn rayon_counter(count: usize) -> usize {
-    let mut total_count = 0;
-    let num_threads = 8;
-    let count_per_thread = count / num_threads;
-
-    let local_counts: Vec<_> = (0..num_threads)
-        .into_par_iter()
-        .map(|_| {
-            let mut local_count: usize = 0;
-
-            for _ in 0..count_per_thread {
-                local_count += 1;
-            }
-
-            local_count
-        })
-        .collect();
-
-    for l in local_counts {
-        total_count += l;
-    }
-
-    total_count
 }
 
 #[cfg(test)]
@@ -124,6 +135,3 @@ mod tests {
         // assert_eq!(out, count)
     }
 }
-
-// can run your fn in a fastest mode
-// cargo test --release -- --nocapture
